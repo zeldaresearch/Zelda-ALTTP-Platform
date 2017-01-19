@@ -1,0 +1,40 @@
+animation{
+  name = "walking",
+  src_image = "entities/dungeon_sprites.png",
+  directions = {
+    { x = 568, y = 408, frame_width = 8, frame_height = 8, origin_x = 3, origin_y = 3 },
+    { x = 568, y = 408, frame_width = 8, frame_height = 8, origin_x = 3, origin_y = 3 },
+    { x = 568, y = 408, frame_width = 8, frame_height = 8, origin_x = 3, origin_y = 3 },
+    { x = 568, y = 408, frame_width = 8, frame_height = 8, origin_x = 3, origin_y = 3 },
+  },
+}
+animation{
+  name = "hurt",
+  src_image = "entities/dungeon_sprites.png",
+  directions = {
+    { x = 544, y = 384, frame_width = 16, frame_height = 16, origin_x = 8, origin_y = 13 },
+    { x = 544, y = 384, frame_width = 16, frame_height = 16, origin_x = 8, origin_y = 13 },
+    { x = 544, y = 384, frame_width = 16, frame_height = 16, origin_x = 8, origin_y = 13 },
+    { x = 544, y = 384, frame_width = 16, frame_height = 16, origin_x = 8, origin_y = 13 },
+  },
+}
+animation{
+  name = "small",
+  src_image = "entities/dungeon_sprites.png",
+  directions = {
+    { x = 792, y = 344, frame_width = 8, frame_height = 8, origin_x = 2, origin_y = 2 },
+    { x = 792, y = 344, frame_width = 8, frame_height = 8, origin_x = 2, origin_y = 2 },
+    { x = 792, y = 344, frame_width = 8, frame_height = 8, origin_x = 2, origin_y = 2 },
+    { x = 792, y = 344, frame_width = 8, frame_height = 8, origin_x = 2, origin_y = 2 },
+  },
+}
+animation{
+  name = "tiny",
+  src_image = "entities/dungeon_sprites.png",
+  directions = {
+    { x = 784, y = 344, frame_width = 8, frame_height = 8, origin_x = 3, origin_y = 3 },
+    { x = 784, y = 344, frame_width = 8, frame_height = 8, origin_x = 3, origin_y = 3 },
+    { x = 784, y = 344, frame_width = 8, frame_height = 8, origin_x = 3, origin_y = 3 },
+    { x = 784, y = 344, frame_width = 8, frame_height = 8, origin_x = 3, origin_y = 3 },
+  },
+}

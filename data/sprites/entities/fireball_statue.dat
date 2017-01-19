@@ -1,0 +1,7 @@
+animation{
+  name = "Statue",
+  src_image = "entities/dungeon_sprites.png",
+  directions = {
+    { x = 832, y = 368, frame_width = 16, frame_height = 16, origin_x = 8, origin_y = 13 },
+  },
+}

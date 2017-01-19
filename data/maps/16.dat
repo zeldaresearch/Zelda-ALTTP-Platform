@@ -1,0 +1,9 @@
+properties{
+  x = 0,
+  y = 0,
+  width = 8000,
+  height = 8000,
+  tileset = "1",
+  music = "lost_woods",
+}
+

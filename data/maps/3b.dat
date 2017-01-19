@@ -1,0 +1,17 @@
+properties{
+  x = 0,
+  y = 0,
+  width = 6000,
+  height = 6000,
+  tileset = "3",
+  music = "cave",
+}
+
+destination{
+  layer = 0,
+  x = 8,
+  y = 13,
+  direction = 3,
+  default = true,
+}
+

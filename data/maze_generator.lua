@@ -238,7 +238,7 @@ function maze_gen.get_neighbors(maze, position, only_get_unvisited)
 	return neighbors
 end
 
--- if width contains decimals it will grab one extra row and column on the leftbottom side
+-- if width contains decimals it will grab one extra row and column on the bottomleft side
 function maze_gen.get_nodes_around_pos(maze, position, width, only_get_unvisited)
 	local nodes = {}
 	local pos_list = {}

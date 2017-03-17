@@ -19,38 +19,46 @@ local light_manager 	= require("maps/lib/light_manager")
 
 local content = {}
 
+
+-- Main file for the generation of content
+
+-- Main function that is called from a map
+-- given_map is the map file that this is called from
+-- params contains the generation parameters defined in the map lua file
+-- end_destination is the teleport destination when the player reaches the end of the generated map
 function content.start_test(given_map, params, end_destination)
-	-- Initialize the pseudo random number generator
 	log.verbose = false
-	--log.debug_log_reset()
-	local seed = 
-			tonumber(tostring(os.time()):reverse():sub(1,6)) -- good random seeds
+	local seed = tonumber(tostring(os.time()):reverse():sub(1,6)) -- good random seeds
 	log.debug("random seed = " .. seed)
 	math.randomseed( seed )
+	-- Initialize the pseudo random number generator
 	math.random(); math.random(); math.random(); math.random(); math.random(); math.random()
 	-- done. :-)
 
-
+	local tic = os.clock()
+	
+	-- set the game to static or dynamic difficulty setting
 	if game:get_value("static_difficulty") == nil then
 		local random_nr = math.random(1000)
 		if random_nr >= 500 then 
 			 game:set_value("static_difficulty", true)
 		else game:set_value("static_difficulty", false) end
 	end
-	--game:set_value("static_difficulty", false)
-	--local static_difficulty = params.static_difficulty or true
+
+	-- initialize the difficulty settings
 	local static_difficulty = game:get_value("static_difficulty")
 	fight_generator.static_difficulty = static_difficulty
 	fight_generator.fight_difficulty = params.fight_difficulty
 	puzzle_gen.static_difficulty = static_difficulty
 	puzzle_gen.puzzle_difficulty = params.puzzle_difficulty
 	
+	-- initialize global variables
 	map = given_map
 	game = map:get_game()
 	hero = map:get_hero()
 	hero:freeze()
-	--if not game:get_value("sword__1") then hero:start_treasure("sword", 1, "sword__1") end
 		
+    -- draw_these_effects is a list of functions that should be drawn each frame on certain conditions
 	map.draw_these_effects = map.draw_these_effects or {}
 
 	map.on_draw = 
@@ -60,12 +68,7 @@ function content.start_test(given_map, params, end_destination)
 			end
 		end
 
-	log.debug("test")
-	local tic = os.clock()
-	log.debug(tic)
-
-	log.debug("end test")
-
+	-- Copy parameters and fill in standard parameters if not found
 	local tileset_id = tonumber(map:get_tileset())
 	local outside = false
 	if tileset_id == 1 or tileset_id == 13 then outside = true end
@@ -75,6 +78,8 @@ function content.start_test(given_map, params, end_destination)
 	for k,v in pairs(standard_params) do
 		if params[k] == nil then params[k]=v end
 	end
+	
+	-- Produce the graph that is used to generate the map
 	mission_grammar.produce_standard_testing_graph(params)
 	--mission_grammar.produce_graph(params)
 	log.debug("produced graph")
@@ -89,17 +94,18 @@ function content.start_test(given_map, params, end_destination)
 																)
 	content.area_details.map = map
 	log.debug(content.area_details)
+	-- make sure hud is enabled and control is possible
 	hero:set_visible(true)
 	game:set_hud_enabled(true)
     game:set_pause_allowed(true)
     game:set_dialog_style("box")
     light_manager.enable_light_features(map)
 
+	-- initialize logs
     explore.start_recording( content.area_details, params )
 	puzzle_logger.init_logs()
 
-    --map:set_tileset("1") needs to be set before the map loads
-    --content.areas = space_gen.generate_space(content.area_details, map)
+	-- generate grid based space for rooms
     content.areas = space_gen.generate_simple_space(content.area_details, map)
     log.debug("done with generation")
 	
@@ -107,15 +113,14 @@ function content.start_test(given_map, params, end_destination)
     local exclusion_areas={}
     local layer
 	if content.area_details.outside then -- forest
-    	--exit_areas, exclusion_areas = content.create_forest_map(content.areas, content.area_details)
     	exit_areas, exclusion_areas = content.create_simple_forest_map(content.areas, content.area_details, end_destination)
     	layer = 0
 	else -- dungeon
-		-- exit_areas, exclusion_areas = content.create_dungeon_map(content.areas, content.area_details)
 		exit_areas, exclusion_areas = content.create_simple_dungeon_map(content.areas, content.area_details, end_destination)
 		layer = 0
 	end
-	-- adding effects
+	
+	-- adding sensors for spawning fights
 	fight_generator.add_effects_to_sensors(map, content.areas, content.area_details)
 	fight_generator.areastatus = {}
 	fight_generator.importWeights()
@@ -126,6 +131,7 @@ function content.start_test(given_map, params, end_destination)
 	log.debug(exclusion_areas)
 	local rewards_placed = 0
 
+	-- fill in the space based on the graph
 	maze_gen.set_map(map)
 	for areanumber, a in pairs(content.areas["walkable"]) do
 		log.debug("filling in area "..areanumber)
@@ -169,19 +175,16 @@ function content.start_test(given_map, params, end_destination)
     local toc = os.clock()
     log.debug("time required for level generation = "..toc-tic.." sec")
 
-	--log.debug(printGlobalVariables())
+	-- return control to the player
 	hero:unfreeze()
+	-- place seperators which influences camera movement
 	content.place_separators(content.areas)
-	-- local hero_x, hero_y, hero_layer = hero:get_position()
-	-- map.small_keys_savegame_variable = "small_key_map"..map:get_id()
-	-- map:create_pickable{layer=hero_layer, x=hero_x+16, y=hero_y, treasure_name="small_key", treasure_variant = 1}
+	-- Open all doors in case the hero died while fighting in the caves
 	map:set_doors_open("door_normal_area")
-	-- content.open_normal_doors_sensorwise()
-	-- local entity = map:create_custom_entity({name="fireball_statue", direction=0, layer=0, x=hero_x+48, y=hero_y+16, model="fireball_statue"})
-	-- entity:stop()
 	log.debug("content.areas")
 	log.debug(content.areas)
 
+	-- when the map is finished, output the logs
 	map.on_finished = 
 		function()
 			explore.finished_level( )
@@ -189,6 +192,7 @@ function content.start_test(given_map, params, end_destination)
 		end
 end
 
+-- used in the map itself, sets the items that should be found in the generated level
 function content.set_planned_items_for_this_zone( list )
 	mission_grammar.planned_items = list
 end
@@ -207,6 +211,7 @@ function content.open_normal_doors_sensorwise()
 	end
 end
 
+-- generate a maze in a room
 function content.makeSingleMaze(area, exit_areas, area_details, exclusion_area, layer) 
 	log.debug("start maze generation")
 	local maze = maze_gen.generate_maze( area, exit_areas, exclusion_area, map )
@@ -215,15 +220,7 @@ function content.makeSingleMaze(area, exit_areas, area_details, exclusion_area, 
 	end
 end
 
-
-
-
-
------------------------------------------------------------------------------------------------------------------------------------------------
------==================================================    Overhaul starts here =========================================----------------------
------------------------------------------------------------------------------------------------------------------------------------------------
-
-
+-- place the separators at the edges of the rooms
 function content.place_separators( areas )
 	for areanumber, a in pairs(areas["nodes"]) do
 		local east = area_util.expand_line( area_util.get_side(a.area, 0), 8 )
@@ -237,6 +234,7 @@ function content.place_separators( areas )
     end
 end
 
+-- fill the rooms with a forest theme
 function content.create_simple_forest_map(areas, area_details, end_destination)
 	-- start filling in
 	local tileset = area_details.tileset_id
@@ -247,12 +245,14 @@ function content.create_simple_forest_map(areas, area_details, end_destination)
 	local exit_areas={}
     local exclusion_areas={}
 
+	-- initialize logging for what was generated
     for areanumber, a in pairs(areas["walkable"]) do
     	a.throwables = {["bush"]=0, ["white_rock"]=0, ["black_rock"]=0, ["pot"]=0}
     	a.contact_length = {["pitfall"]=0, ["spikes"]=0}
     	placement.place_tile(area_util.resize_area(a.area, {-16, -16, 16, 16}), 7, "room_floor_"..areanumber, 0)
     end
 
+	-- for all room exits: add barriers, place ground tile, add areas to be excluded when the trees are placed
 	for areanumber,connections in pairs(areas["exit"]) do
 		exit_areas[areanumber]={}
 		exclusion_areas[areanumber]={}
@@ -275,6 +275,7 @@ function content.create_simple_forest_map(areas, area_details, end_destination)
 		end
 	end
 
+	-- for all room entrances: place ground tile, add areas to be excluded when the trees are placed
 	for areanumber,connections in pairs(areas["entrance"]) do
 		for _, connection in pairs(connections) do
 			for direction, area in pairs(connection) do
@@ -291,6 +292,7 @@ function content.create_simple_forest_map(areas, area_details, end_destination)
 	log.debug("exit_areas")
 	log.debug(exit_areas)
 
+	-- Add ground tiles for level entrance and exits and set up teleporters
 	for areanumber,connections in pairs(areas["other_map"]) do
 		for _, connection in ipairs(connections) do
 			for direction, area in pairs(connection) do
@@ -319,6 +321,7 @@ function content.create_simple_forest_map(areas, area_details, end_destination)
 		end
 	end
 
+	-- Generate the walkable path through the rooms
 	local walkable_areas = {}
 	for areanumber, a in pairs(areas["walkable"]) do
 		local exclusions = {}
@@ -352,9 +355,11 @@ function content.create_simple_forest_map(areas, area_details, end_destination)
 		end
     end
 
+	-- We now have all the walkable areas, in the areas that are left we place the treelines
     bounding_area = area_util.resize_area(bounding_area, {-152, -128, 256, 256}) 
 	local treelines = content.plant_trees(bounding_area, areas["walkable"], exclusion_areas_trees)
 
+	-- We determine the left over spaces from planting the trees
 	local closed_leftovers = {}
 	for areanumber, list in ipairs(exclusion_areas) do
 		closed_leftovers[areanumber] = {}
@@ -363,10 +368,8 @@ function content.create_simple_forest_map(areas, area_details, end_destination)
 			for _, tl in ipairs(treelines) do
 				local counter=1
 				repeat
-					-- log.debug(counter)
 					local excl = adjusted_exclusions[counter]
 					if excl and area_util.areas_intersect(excl, tl) then 
-						-- log.debug("content.create_forest_map found intersection treeline "..i)
 						local new_areas = area_util.shrink_until_no_conflict(tl, excl)
 						adjusted_exclusions[counter] = false
 						table_util.add_table_to_table(new_areas, adjusted_exclusions)
@@ -379,18 +382,26 @@ function content.create_simple_forest_map(areas, area_details, end_destination)
 			table_util.add_table_to_table(adjusted_exclusions, closed_leftovers[areanumber])
 		end
 	end
-	local choices = {{{"green_tree"}, {"old_prison"}, {"stone_hedge"}},
-					 {{"green_tree"}, {"small_green_tree"}, --{"tiny_yellow_tree"}
+	
+	-- Prop priority from large to small
+	local choices = { -- themes
+					 { -- a single theme, lists of props ordered from largest to smallest
+					  {"green_tree"}, {"old_prison"}, {"stone_hedge"}
 					 },
-					 {{"green_tree"}, {"big_statue"}, --{"blue_block"}
-					 }}
+					 {
+					  {"green_tree"}, {"small_green_tree"}, --{"tiny_yellow_tree"}
+					 },
+					 {
+					  {"green_tree"}, {"big_statue"}, --{"blue_block"}
+					 }
+					}
 
 	local destructible = "bush"
-	--if tileset == 13 then destructible = "white_rock" end
 
 	local types_of_filler = {["pitfall"]=20, ["filler"]=60, ["destructible"]=20}
 	if tileset == 13 then types_of_filler = {["water"]=40, ["filler"]=40, ["destructible"]=20} end
 	
+	-- Fill the left over areas
 	for areanumber, list in ipairs(closed_leftovers) do 
 		local choice_for_that_area = table_util.random(choices)
 		for _, c in ipairs(list) do
@@ -407,6 +418,7 @@ function content.create_simple_forest_map(areas, area_details, end_destination)
 		end
 	end 		
 
+	-- generate signs for the main path
 	for areanumber,connections in pairs(areas["exit"]) do
 		for _, connection in ipairs(connections) do
 			for direction, area in pairs(connection) do
@@ -425,12 +437,10 @@ function content.create_simple_forest_map(areas, area_details, end_destination)
 		end
 	end
 
-
-
 	return exit_areas, exclusion_areas
 end
 
-
+-- Dungeons have edge tiles along the walkable areas' edges
 function content.place_edge_tiles(area, width, type, layer, custom_name)
 	local tileset = tonumber(map:get_tileset())
 	local layer = layer or 0; local name = custom_name or "edge"
@@ -442,9 +452,11 @@ function content.place_edge_tiles(area, width, type, layer, custom_name)
 
 end
 
+-- fill the rooms with dungeon theme
 function content.create_simple_dungeon_map(areas, area_details, end_destination)
 	local tileset = area_details.tileset_id
 
+	-- initialize generation log and place floor and edge tiles
 	for areanumber, a in pairs(areas["walkable"]) do
     	a.throwables = {["bush"]=0, ["white_rock"]=0}
     	log.debug("placing floor")
@@ -467,8 +479,6 @@ function content.create_simple_dungeon_map(areas, area_details, end_destination)
 	for areanumber,connections in pairs(areas["exit"]) do
 		exit_areas[areanumber]={}
 		exclusion_areas[areanumber]={}
-		-- log.debug("check this now")
-		-- log.debug(connections)
 		for _, connection in ipairs(connections) do
 			for direction, area in pairs(connection) do
 				if direction == 3 or direction == 0 then
@@ -495,6 +505,7 @@ function content.create_simple_dungeon_map(areas, area_details, end_destination)
 		end
 	end
 
+	-- place doors at the room entrances
 	for areanumber,connections in pairs(areas["entrance"]) do
 		for _, connection in pairs(connections) do
 			for direction, area in pairs(connection) do
@@ -509,7 +520,8 @@ function content.create_simple_dungeon_map(areas, area_details, end_destination)
 			end
 		end
 	end
-
+	
+	-- place doors at the room exits
 	for areanumber,connections in pairs(areas["exit"]) do
 		for _, connection in ipairs(connections) do
 			for direction, area in pairs(connection) do
@@ -517,6 +529,8 @@ function content.create_simple_dungeon_map(areas, area_details, end_destination)
 			end
 		end
 	end
+	
+	-- place teleporters and entrance and exit props
 	for areanumber,connections in pairs(areas["other_map"]) do
 		for _, connection in ipairs(connections) do
 			for direction, area in pairs(connection) do
@@ -542,7 +556,7 @@ function content.create_simple_dungeon_map(areas, area_details, end_destination)
 		end
 	end
 
-	-- start filling in floor
+	-- start filling in the rooms
 	for areanumber, a in pairs(areas["walkable"]) do
 		local choices = {["pitfall"]=2, ["spikes"]=2, ["wall"]=6}
 		local filler_choices = {{{"bright_rock_64x64"}, {"bright_rock_48x48"}, {"bright_rock_32x32"}},
@@ -604,6 +618,7 @@ function content.create_simple_dungeon_map(areas, area_details, end_destination)
 	return exit_areas, exclusion_areas
 end
 
+-- Create door at a certain location with a certain direction
 function content.create_simple_door( area, areanumber, direction )
 	local object_details = lookup.doors["door_normal"]
 	local name = "door_normal_area_"..areanumber.."_"..direction
@@ -627,11 +642,8 @@ end
 -- barrier type is already concluded when the mission grammar is formed
 -- so we need to create a table of destructables and doors to place at specific spots along the area
 function content.create_simple_barriers( area_details, opening, direction, areanumber, to_area )
-	-- log.debug("creating simple barriers")
-	-- log.debug("to_area")
-	-- log.debug(to_area)
 	if not to_area then return false end
-	-- log.debug(areanumber .." to ".. to_area)
+	
 	-- check if area details has anything on barriers to the to_area
 	local connection = false
 	for k, v in ipairs(area_details[areanumber]) do	if v.areanumber == to_area then connection = k end end
@@ -699,10 +711,9 @@ function content.create_simple_barriers( area_details, opening, direction, arean
 end
 
 
-
+-- create the tree lines for the forest map based on the total area and the exclusion areas
 function content.plant_trees(area, areas_to_plant, exclude_these)
 	-- create tree lines which will follow a certain pattern uniformly across the map
-
 	local tree_size = {x=64, y=80}
 	local x, y, width, height = area.x1, area.y1, area.x2-area.x1, area.y2-area.y1
 	local unused_areas = {table_util.copy(area)}
@@ -710,11 +721,8 @@ function content.plant_trees(area, areas_to_plant, exclude_these)
 		local area_to_plant = area_util.resize_area(a.area, {-152, -128, 64, 128})
 		local counter=1
 		repeat
-			-- log.debug(counter)
 			local area_part = unused_areas[counter]
 			if area_part and area_util.areas_intersect(area_part, area_to_plant) then 
-
-				-- log.debug("content.create_forest_map found intersection treeline "..i)
 				local new_areas = area_util.shrink_until_no_conflict(area_to_plant, area_part, "vertical")
 				unused_areas[counter] = false
 				table_util.add_table_to_table(new_areas, unused_areas)
@@ -724,11 +732,11 @@ function content.plant_trees(area, areas_to_plant, exclude_these)
 		until counter > #unused_areas
 	end
  	table_util.remove_false(unused_areas)
+	
 	-- create each horizontal layer of trees
 	local treelines = math.floor((height-32) -- 32 is the height that overlaps with the previous row
 										/ 48) -- the height of the tree that is not overlapping at the bottom row
 	log.debug("treelines")
-	-- log.debug(treelines)
 	local blocking_size = {x=48, y=64}
 	local current_treeline = {}
 	local previous_treeline = {}
@@ -741,16 +749,13 @@ function content.plant_trees(area, areas_to_plant, exclude_these)
 		local new_treeline = {x1=x+x_offset+8, y1=y+top_line, 
 							  x2=x+width, y2=y+top_line+64}
 		local chopped_treeline = {new_treeline}
+		
 		-- checking for overlap with transitions
-		-- log.debug("content.create_forest_map transitions treeline "..i)
 		for _, area in ipairs(unused_areas) do
 			local counter=1
 			repeat
-				-- log.debug(counter)
 				local tl = chopped_treeline[counter]
 				if tl and area_util.areas_intersect(tl, area) then 
-
-					-- log.debug("content.create_forest_map found intersection treeline "..i)
 					local new_areas = area_util.shrink_until_no_conflict(area, tl, "horizontal")
 					chopped_treeline[counter] = false
 					table_util.add_table_to_table(new_areas, chopped_treeline)
@@ -760,16 +765,18 @@ function content.plant_trees(area, areas_to_plant, exclude_these)
 			until counter > #chopped_treeline
 		end
 		table_util.remove_false(chopped_treeline)
-		for i, ctl in ipairs(chopped_treeline) do
-			chopped_treeline[i] = area_util.resize_area(ctl, {-128, 0, 128, 0})
+		
+		-- make sure the treelines fall inside the map
+		for j, ctl in ipairs(chopped_treeline) do
+			chopped_treeline[j] = area_util.resize_area(ctl, {-128, 0, 128, 0})
 		end
+		
+		-- exclude the walkables from the treelines
 		for _, area in ipairs(exclude_these) do
 			local counter=1
 			repeat
-				-- log.debug(counter)
 				local tl = chopped_treeline[counter]
 				if tl and area_util.areas_intersect(tl, area) then 
-					-- log.debug("content.create_forest_map found intersection treeline "..i)
 					local new_areas = area_util.shrink_until_no_conflict(area, tl, "horizontal")
 					chopped_treeline[counter] = false
 					table_util.add_table_to_table(new_areas, chopped_treeline)
@@ -778,7 +785,10 @@ function content.plant_trees(area, areas_to_plant, exclude_these)
 				end
 			until counter > #chopped_treeline
 		end
+		
 		table_util.remove_false(chopped_treeline)
+		
+		-- final determination whether a space is large enough to fit a tree, and shrink the areas to fully fit the trees
 		current_treeline = {}
 		for _, tl in ipairs(chopped_treeline) do
 			local area_size = area_util.get_area_size(tl)
@@ -815,7 +825,7 @@ function content.plant_trees(area, areas_to_plant, exclude_these)
 				local right_area = {x1=tl.x2-(till_next_part)+8,y1=tl.y1,x2=tl.x2,y2=tl.y2}
 				tl.x2 = tl.x2-(till_next_part)
 				if right_area.x2-right_area.x1 > 8 then
-					--table.insert(left_overs, right_area)
+					table.insert(left_overs, right_area)
 				end
 				if tl.x2-tl.x1 ~= 0 then 
 					table.insert(current_treeline, tl)
@@ -825,12 +835,8 @@ function content.plant_trees(area, areas_to_plant, exclude_these)
 		table_util.add_table_to_table(current_treeline, treeline_area_list)
 		previous_treeline = current_treeline
 	end
-	-- visualize
-	-- for _, tl in ipairs(treeline_area_list) do
-	-- 	placement.place_tile(area_util.resize_area(tl, {-8, -16, 8, 0}), 7, "forest", 0)
-	-- end
+	-- plant the trees
 	for _, tl in ipairs(treeline_area_list) do
-		-- content.show_corners(tl)
 		--left side
 		placement.place_tile({x1=tl.x1-8, y1=tl.y1-3*8, x2=tl.x1, y2=tl.y1+2*8}, 513, "forest", 2) -- left canopy
 		placement.place_tile({x1=tl.x2, y1=tl.y1-3*8, x2=tl.x2+8, y2=tl.y1+2*8}, 514, "forest", 2) -- right canopy
@@ -856,6 +862,8 @@ function content.plant_trees(area, areas_to_plant, exclude_these)
 	return treeline_area_list
 end
 
+
+-- Actual placement of the signs which display the main path
 function content.display_main_path( outside, area, direction )
 	if outside then
 		-- place signs beside the exit saying either, towards mines, towards village

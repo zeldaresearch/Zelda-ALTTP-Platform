@@ -55,7 +55,10 @@ lookup.doors = {
 						 opening_method = "interaction_if_savegame_variable", opening_condition = "dungeon_1_boss_key", cannot_open_dialog = "_boss_key_required"},
 }
 
--- use the same as prop lookup
+-- format = ["keyname"] = 
+-- { 
+-- 		required_size={x=num, y=num}, [orderOfPlacement] = { [{area as key}] = { [tileset_number]=tile_id, ... } }
+-- }
 lookup.transitions = 
 {
 	["cave_stairs_1"] = 		{required_size={x=32, y=48},
@@ -141,6 +144,7 @@ lookup.transitions =
 
 }
 
+
 lookup.tiles =
 {
 	["maze_wall_hor"]={[1]=1016, [13]=1016, [4]=70,  [3]=70},
@@ -178,6 +182,10 @@ lookup.wall_tiling =
 				 },
 }
 
+-- format = ["keyname"] = 
+-- { 
+-- 		required_size={x=num, y=num}, [orderOfPlacement] = { [{area as key}] = { [tileset_number]=tile_id, ... } }
+-- }
 lookup.props = 
 {
 	-- forest props

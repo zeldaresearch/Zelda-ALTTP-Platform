@@ -53,38 +53,38 @@ el.new_log = {
 }
 
 el.log_order = {
-	"name", -- DONE 
+	"name",  
 	"static_difficulty",
-	"map_id", -- DONE
-	"branch_length", -- DONE 
-	"fights", -- DONE 
-	"puzzles", -- DONE 
-	"outside",  -- DONE 
-	"mission_type", -- DONE 
-	"fights_to_puzzle_rooms_ratio", -- DONE 
-	"total_rooms", --DONE
-	"rooms_visited", -- DONE 
-	"unique_rooms_visited", -- DONE 
-	"perc_unique_rooms_visited", -- DONE 
-	"rewards_available", -- DONE
-	"rewards_retrieved", -- DONE
+	"map_id", 
+	"branch_length",  
+	"fights",  
+	"puzzles",  
+	"outside",   
+	"mission_type",  
+	"fights_to_puzzle_rooms_ratio",  
+	"total_rooms", 
+	"rooms_visited",  
+	"unique_rooms_visited",  
+	"perc_unique_rooms_visited",  
+	"rewards_available", 
+	"rewards_retrieved", 
 	"heart_available",
 	"heart_retrieved",
-	"perc_rewards_retrieved", -- DONE
-	"total_time_spent", -- DONE 
-	"total_time_spent_optional", -- DONE 
-	"total_time_spent_main", -- DONE 
-	"perc_total_time_spent_optional", -- DONE
-	"perc_total_time_spent_main", -- DONE
-	"total_fights_encountered", -- DONE
-	"total_fights_finished", -- DONE
-	"total_time_spent_fighting", -- DONE
-	"total_puzzles_encountered", -- DONE
-	"total_puzzles_finished", -- DONE
-	"total_time_spent_puzzling", -- DONE
-	"fights_to_puzzle_time_ratio", -- DONE
-	"total_time_spent_other", -- DONE
-	"fights_to_puzzle_encounter_ratio" -- DONE
+	"perc_rewards_retrieved", 
+	"total_time_spent",  
+	"total_time_spent_optional",  
+	"total_time_spent_main",  
+	"perc_total_time_spent_optional", 
+	"perc_total_time_spent_main", 
+	"total_fights_encountered", 
+	"total_fights_finished", 
+	"total_time_spent_fighting", 
+	"total_puzzles_encountered", 
+	"total_puzzles_finished", 
+	"total_time_spent_puzzling", 
+	"fights_to_puzzle_time_ratio", 
+	"total_time_spent_other", 
+	"fights_to_puzzle_encounter_ratio" 
 }
 
 local new_log_helper = {

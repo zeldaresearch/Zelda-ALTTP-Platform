@@ -4,9 +4,12 @@ local num_util = require("num_util")
 local lookup = require("data_lookup")
 local area_util = {}
 
--- part of conflict resolution
+-- This file contains util functions that manipulate areas of the form {x1=num, x2=num, y1=num, y2=num}
+
+
+-- Used as part of conflict resolution in the space generation
+-- Shrinks and splits the new_area into one or more areas such that they do not overlap with the old_area
 function area_util.shrink_until_no_conflict(new_area, old_area, preference)
-	-- log.debug("short conflict resolution")
 	local conflict_free = false
 	local newly_made_areas = {}
 	intersection = area_util.areas_intersect(new_area, old_area)
@@ -14,44 +17,38 @@ function area_util.shrink_until_no_conflict(new_area, old_area, preference)
 	local conflict_area
 	newly_made_areas[#newly_made_areas+1], conflict_area = area_util.shrink_area(old_area, intersection, preference)
 	intersection = area_util.areas_intersect(new_area, conflict_area)
-	-- log.debug("conflict area:")
-	-- log.debug(conflict_area)
-	-- log.debug("intersection:")
-	-- log.debug(intersection)
+
 	if area_util.areas_equal(conflict_area, intersection) then conflict_free = true end
 	while not conflict_free do
 		newly_made_areas[#newly_made_areas+1], conflict_area = area_util.shrink_area(conflict_area, intersection, preference)
 		intersection = area_util.areas_intersect(new_area, conflict_area)
-		-- log.debug("conflict area:")
-		-- log.debug(conflict_area)
-		-- log.debug("intersection:")
-		-- log.debug(intersection)
 		if area_util.areas_equal(conflict_area, intersection) then conflict_free = true end
 	end
-	-- log.debug("conflict free again")
+	
 	table_util.remove_false(newly_made_areas)
 	return newly_made_areas, conflict_area
 end
 
-
-
+-- Used to assist the space generation of rooms
+-- Using the area as outer boundary, wall areas are returned with a certain width
 function area_util.create_walls( area, wall_width )
-	local walls = {[1]={x1=area.x1+wall_width, x2=area.x2-wall_width, y1=area.y1, y2=area.y1+wall_width},
-				   [0]={x1=area.x2-wall_width, x2=area.x2, y1=area.y1+wall_width, y2=area.y2-wall_width},
-				   [2]={x1=area.x1, x2=area.x1+wall_width, y1=area.y1+wall_width, y2=area.y2-wall_width},
-				   [3]={x1=area.x1+wall_width, x2=area.x2-wall_width, y1=area.y2-wall_width, y2=area.y2}}
-	local corners = {[1]={x1=area.x2-wall_width, x2=area.x2, y1=area.y1, y2=area.y1+wall_width},
-					 [2]={x1=area.x1, x2=area.x1+wall_width, y1=area.y1, y2=area.y1+wall_width},
-					 [0]={x1=area.x2-wall_width, x2=area.x2, y1=area.y2-wall_width, y2=area.y2},
-					 [3]={x1=area.x1, x2=area.x1+wall_width, y1=area.y2-wall_width, y2=area.y2}}
+	local walls = {[1]={x1=area.x1+wall_width, x2=area.x2-wall_width, y1=area.y1, y2=area.y1+wall_width}, -- north
+				   [0]={x1=area.x2-wall_width, x2=area.x2, y1=area.y1+wall_width, y2=area.y2-wall_width}, -- east
+				   [2]={x1=area.x1, x2=area.x1+wall_width, y1=area.y1+wall_width, y2=area.y2-wall_width}, -- west
+				   [3]={x1=area.x1+wall_width, x2=area.x2-wall_width, y1=area.y2-wall_width, y2=area.y2}} -- south
+	local corners = {[1]={x1=area.x2-wall_width, x2=area.x2, y1=area.y1, y2=area.y1+wall_width}, -- northeast
+					 [2]={x1=area.x1, x2=area.x1+wall_width, y1=area.y1, y2=area.y1+wall_width}, -- northwest
+					 [0]={x1=area.x2-wall_width, x2=area.x2, y1=area.y2-wall_width, y2=area.y2}, -- southeast
+					 [3]={x1=area.x1, x2=area.x1+wall_width, y1=area.y2-wall_width, y2=area.y2}} -- southwest
 	return walls, corners
 end
 
-
+-- Util function to get the amount of pixels in the area, and the length of x and y
 function area_util.get_area_size(area)
 	return {size=((area.x2-area.x1)*(area.y2-area.y1)), x=(area.x2-area.x1), y=(area.y2-area.y1)}
 end
 
+-- Util function to offset the boundaries of an area
 -- resize_table={x1, y1, x2, y2}
 function area_util.resize_area(area, resize_table)
 	local result = table_util.copy(area)
@@ -62,6 +59,7 @@ function area_util.resize_area(area, resize_table)
 	return result
 end
 
+-- Util function to move the area a certain amount of pixels
 function area_util.move_area(area, move_x, move_y)
 	local result = table_util.copy(area)
 	result.x1 = result.x1+move_x
@@ -71,6 +69,7 @@ function area_util.move_area(area, move_x, move_y)
 	return result
 end
 
+-- Util function to test whether area1 intersects with area2 and returns the intersecting area if it does
 -- area = {x1, y1, x2, y2}
 function area_util.areas_intersect(area1, area2)
 	if (area1.x1 < area2.x2 and area1.x2 > area2.x1 and
@@ -84,6 +83,7 @@ function area_util.areas_intersect(area1, area2)
     end
 end
 
+-- Util function to test if areas are equal
 function area_util.areas_equal(area1, area2)
 	if 	area1.x1 == area2.x1 and
 		area1.x2 == area2.x2 and
@@ -95,6 +95,8 @@ function area_util.areas_equal(area1, area2)
 	end
 end
 
+
+-- Util function to cut off any part of the given area such that limit_this_area falls inside to_this_area
 function area_util.limit_area_to_area(limit_this_area, to_this_area)
 	local result = table_util.copy(limit_this_area)
 	local limited_area = {
@@ -108,6 +110,7 @@ function area_util.limit_area_to_area(limit_this_area, to_this_area)
 	return result
 end
 
+-- Util test to test if area1 and area2 are adjescent and touching and in which direction and the touching length
 -- touching direction is from 1 to 2
 -- 0:east, 1:north, 2:west, 3:south
 function area_util.areas_touching(area1, area2)
@@ -138,6 +141,10 @@ function area_util.areas_touching(area1, area2)
 	return touching, along_entire_length, touching_area, touching_direction, touching_length
 end
 
+
+-- Util function to generate a random sized area with a certain origin point where normal is the top left anchor
+-- area_details = {preferred_area_surface=number, wall_width=number}
+-- origin = {x, y, origindirection}
 function area_util.random_area(area_details, origin)
 	local preferred_area_surface = area_details.preferred_area_surface
 	local wall_width = area_details.wall_width
@@ -176,9 +183,10 @@ function area_util.random_area(area_details, origin)
 
 end
 
+-- Used in the space generation of mazes and rooms
+-- Util function to expand an area with a width or length of 0 to a rectangular area
 function area_util.expand_line( area, width )
 	local expanded_area
-	local dir
 	if area.y1 == area.y2 then -- needs to be expanded vertically
 		expanded_area = area_util.resize_area(area, {0, -width, 0, width})
 	else -- needs to be expanded horizontally
@@ -187,6 +195,7 @@ function area_util.expand_line( area, width )
 	return expanded_area
 end
 
+-- Util function that helps shape an area based on the point of another area
 -- helper function for creating transitions that will be close together
 function area_util.area_cutoff(closest_point, max_distance, area, min_width, min_height)
 	local new_area = table_util.copy(area)
@@ -221,7 +230,8 @@ function area_util.area_cutoff(closest_point, max_distance, area, min_width, min
 	return new_area
 end
 
-
+-- Util function to get a random piece of an area with a certain width and height 
+-- if the width and height parameters are larger than the area, then the entire area is returned
 function area_util.random_internal_area(area, width, height)
 	local new_area = {}
 	if  area.x2 - area.x1 > width then 
@@ -241,7 +251,7 @@ function area_util.random_internal_area(area, width, height)
 	return new_area
 end
 
-
+-- Util function to merge 2 areas
 -- only merge areas that are touching along entire length
 -- or when trying to find the area span of 2 areas
 function area_util.merge_areas(area1, area2)
@@ -251,9 +261,8 @@ function area_util.merge_areas(area1, area2)
 			y2=math.max(area1.y2, area2.y2)}
 end
 
---OLD
--- the overlap horizontally and vertically
---TODO Not yet used
+-- Not used
+-- Util function to find the area in between two areas
 function area_util.get_areas_in_between(area1, area2)
 	return  {x2=math.max(area1.x1, area2.x1), 
 			x1=math.min(area1.x2, area2.x2), 
@@ -265,6 +274,7 @@ function area_util.get_areas_in_between(area1, area2)
 			y1=math.min(area1.y2, area2.y2)}
 end
 
+-- Util function to get the largest area
 function area_util.get_largest_area( areas )
 	local largest_area
 	local max_size = 0
@@ -277,7 +287,15 @@ function area_util.get_largest_area( areas )
 	return largest_area
 end
 
+-- Get sqrt squared distance between two areas
+function area_util.distance(area1, area2)
+	local center1 = {x=(area1.x1+area1.x2)/2, y=(area1.y1+area1.y2)/2}
+	local center2 = {x=(area2.x1+area2.x2)/2, y=(area2.y1+area2.y2)/2}
+	local zeroed = {x=center1.x-center2.x, y=center1.y-center2.y}
+	return math.sqrt(zeroed.x^2+zeroed.y^2)
+end
 
+-- Util function to get the distance between two areas with an optional overlap that should be required
 function area_util.distance(area1, area2, overlap_required)
 	local x_distance = 0
 	if area2.x2 < area1.x1 then x_distance = area1.x1 - area2.x2 + overlap_required -- area2 is left of area1
@@ -302,7 +320,8 @@ function area_util.distance(area1, area2, overlap_required)
 	return math.sqrt(x_distance^2 + y_distance^2), x_distance, y_distance
 end
 
--- TODO make more concise
+-- function used within shrink_until_no_conflict
+-- Util function to shrink an area once based on the intersection such that the area doesn't overlap with the intersection
 function area_util.shrink_area(area_to_be_shrunk, intersection, preference)
 	local area_width = area_to_be_shrunk.x2-area_to_be_shrunk.x1
 	local area_height = area_to_be_shrunk.y2-area_to_be_shrunk.y1
@@ -382,6 +401,9 @@ function area_util.shrink_area(area_to_be_shrunk, intersection, preference)
 	return newly_made_area, conflict_area
 end
 
+-- Not used
+-- Util function to find a randomized origin point
+-- Was used for randomized generation of areas
 -- directions = {"north","south", "east", "west"}
 -- origin_point= {x, y, expansiondirection}
 function area_util.find_origin_along_edge(area, direction, offset)
@@ -402,6 +424,8 @@ function area_util.find_origin_along_edge(area, direction, offset)
 	end
 end
 
+-- Used in space generation
+-- Util function to return a line or new area that is located on the edge in a certain direction from the given area
 -- 0:east, 1:north, 2:west, 3:south
 function area_util.get_side(area, direction, pluslength, pluswidth)
 	local pluslength = pluslength or 0
@@ -413,6 +437,8 @@ function area_util.get_side(area, direction, pluslength, pluswidth)
 	return false
 end
 
+-- Used in space generation
+-- Util function to get an area of a given {x, y} size from the center of a given area
 function area_util.from_center( area, x, y, round_to_8)
 	local center_x
 	local center_y
@@ -429,13 +455,6 @@ end
 -- makes sure there are no negative width or height in the area
 function area_util.correct(area)
 	return {x1=math.min(area.x1, area.x2), x2=math.max(area.x1, area.x2), y1=math.min(area.y1, area.y2), y2=math.max(area.y1, area.y2)}
-end
-
-function area_util.distance(area1, area2)
-	local center1 = {x=(area1.x1+area1.x2)/2, y=(area1.y1+area1.y2)/2}
-	local center2 = {x=(area2.x1+area2.x2)/2, y=(area2.y1+area2.y2)/2}
-	local zeroed = {x=center1.x-center2.x, y=center1.y-center2.y}
-	return math.sqrt(zeroed.x^2+zeroed.y^2)
 end
 
 return area_util

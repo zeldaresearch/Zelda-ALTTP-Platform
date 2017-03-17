@@ -1,5 +1,9 @@
 local log = require("log")
 local q = {}
+
+-- This file contains the code to create the in game questionnaire at the shopkeeper's areas
+
+
 q.questionnaire_done = false
 -----------------------
 q.questions_start=[[

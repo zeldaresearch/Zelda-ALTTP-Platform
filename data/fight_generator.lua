@@ -6,6 +6,10 @@ local learningAlgorithms = require("learningAlgorithms")
 local matrix			= require("matrix")
 local tableserializer   = require("tableserializer")
 
+-- Fight generator
+
+
+-- initialize parameters
 local fight_generator = {}
 local lowestDifficulty = 3
 local highestDifficulty = 5
@@ -29,7 +33,7 @@ function fight_generator.set_monsterAmountDifficulty( i )
 	monsterAmountDifficulty = i
 end
 
--- This line of code is the only thing this project is really about. I'm actually kind of amazed.
+-- prediction based on linear regression data, this can be expanded or replaced.
 function makeDifficultyPrediction(room)
 	return  2.3193 +
 		   -0.9861 * room.fightFinished +
@@ -53,8 +57,10 @@ local roomDifficulties = {{makeDifficultyPrediction(emptyRoom)}}
 
 local enemyTried = 1 -- To initialize the training data, we need to try every enemy.
 
+-- keeps track of the areas already cleared
 fight_generator.areastatus = {}
 
+-- determine the type of fight generation algorithm to use
 function fight_generator.prepare_enemies(game, map, hero, spawnAreas, split_table)
 	local areanumber = split_table[3]
 	local room_type = split_table[5]
@@ -79,6 +85,7 @@ function fight_generator.prepare_enemies(game, map, hero, spawnAreas, split_tabl
 	return enemiesInEncounter
 end
 
+-- Add event for dying and set up initial logging
 function fight_generator.setup_userexperience_and_logging(game, map, hero, areas, split_table)
 	function hero:on_state_changed(state)
 		if fight_generator.fighting then
@@ -107,6 +114,7 @@ function fight_generator.setup_userexperience_and_logging(game, map, hero, areas
 	local f = sol.file.open("userExperience.txt","a+"); 
 end
 
+-- actually spawn the enemies that were determined earlier
 function fight_generator.spawn_enemies(map, split_table, enemiesInEncounter)
 	local areanumber = split_table[3]
 	local room_type = split_table[5]
@@ -173,6 +181,7 @@ function fight_generator.spawn_enemies(map, split_table, enemiesInEncounter)
 	end
 end
 
+-- Add spawn effect to the sensors made by the space generator
 function fight_generator.add_effects_to_sensors (map, areas, area_details)
 	sensorSide = "areasensor_inside_"
 	if area_details.outside then sensorSide = "areasensor_outside_" end
@@ -249,6 +258,7 @@ function fight_generator.add_effects_to_sensors (map, areas, area_details)
 	end
 end
 
+-- analyse gameplay so far using the logging
 function analyseGameplaySoFar(map)
 	local f = sol.file.open("userExperience.txt","r")
 	local room = table_util.copy( emptyRoom )
@@ -334,6 +344,7 @@ function analyseGameplaySoFar(map)
 	if weights then updateWeights( weights ) end
 end
 
+-- offset the difficulty for a certain amount of fights
 function updateMonsterOffset()
 	local new_offset = 1.0-((#roomContentsData-5)*0.1) -- at least 4 tutorial and 10 generated examples and 1 base example before fully relying on the algorithm
 	if new_offset < 0 then new_offset = 0 end
@@ -348,6 +359,7 @@ function updateWeights (weights)
 	baseDifficulty = weights[5][1] 
 end
 
+-- import weights from save file
 function fight_generator.importWeights()
 	if sol.file.exists("roomdata"..game:get_value("saveslot")) and sol.file.exists("roomdiff"..game:get_value("saveslot")) then
 		roomContentsData = table.load("roomdata"..game:get_value("saveslot"))
@@ -480,6 +492,7 @@ function chooseAreaToSpawn(spawnAreas, hero, center)
 	return xPos, yPos
 end
 
+-- Determine the enemies to spawn for dynamic difficulty
 function fight_generator.make(areas, maxDiff, map, currentLife, areanumber) 
 
 	local breedOptions={"minillosaur_egg_fixed","snap_dragon","blue_hardhat_beetle","green_knight_soldier"}	
@@ -545,6 +558,7 @@ function fight_generator.make(areas, maxDiff, map, currentLife, areanumber)
 	return enemiesInFight, difficulty
 end
 
+-- Determine the enemies to spawn for static difficulty
 function fight_generator.make_static_fight(map, spawnAreas, areanumber)
 	local breedOptions={"minillosaur_egg_fixed","snap_dragon","blue_hardhat_beetle","green_knight_soldier"}	
 	local hero = map:get_hero()

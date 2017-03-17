@@ -1,9 +1,9 @@
-### History and intent
+# History and intent
 This project was part of a master thesis by Norbert Heijne. 
 Many well known platforms at the time were not offering a proper ARPG kit that could freely be used for research and that could be fully customized.
 The code in this repository is an attempt at creating such a platform. 
 
-### Setup and usage
+# Setup and usage
 
 ## How to play, things to know
 - Download the repository and start solarus.exe to play
@@ -33,7 +33,7 @@ The code in this repository is an attempt at creating such a platform.
 - Adding support for a machine learning library requires changes to the sourcecode of the engine (C++) and would require that the ML library be accessible via LUA functions
 - The source code of the engine can be found at: http://www.solarus-games.org/development/source-code/
 
-### TODO
+# TODO
 - Comment code for easier usage
 - Add list of editable functions and parameters and their locations in the LUA files
 - Cleanup of code

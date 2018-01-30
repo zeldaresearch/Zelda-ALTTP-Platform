@@ -16,8 +16,8 @@ local bright_surfaces = {
 local white = {255, 255, 255}
 
 function item:on_using()
-	local game = self:get_game()
-	local map = self:get_map()
+	local game = sol.main.game
+	local map = game:get_map()
 	local hero = map:get_hero()
 	hero:unfreeze()
 	if can_use then
@@ -85,16 +85,16 @@ function item:on_using()
 
 end
 
-
-
-
-
 function item:light_up_room()
+    local game = sol.main.game
+	local map = game:get_map()
 	map.temporary_light = true
 	sol.timer.start(item, 3000, function () map.temporary_light = false end) 
 end
 
-function item:immobilize_enemies() 
+function item:immobilize_enemies()
+    local game = sol.main.game
+	local map = game:get_map() 
 	for entity in map:get_entities("generatedEnemy") do
 		if entity:get_sprite():has_animation("immobilized") then
 			entity:immobilize()

@@ -809,7 +809,7 @@ function space_gen.check_for_direct_path(path_width, max_length, areanumber1, ar
 					local length = 0 -- the total length up till the next contact point
 					local length_increment = 0 
 					if max_depth > 1 then length_increment = 
-						area_util.distance(touching_area, possible_paths_tree[string_key].touch_details.touching_area, path_width) end
+						area_util.overlap_distance(touching_area, possible_paths_tree[string_key].touch_details.touching_area, path_width) end
 					length = possible_paths_tree[string_key].length + length_increment
 					if i==areanumber2 then 
 						local new_node = {area_type="walkable", length=length, number=i, 
@@ -844,7 +844,7 @@ function space_gen.check_for_direct_path(path_width, max_length, areanumber1, ar
 						local length_increment = 0 
 						if max_depth > 1 then 
 							length_increment = 
-								area_util.distance(touching_area, possible_paths_tree[string_key].touch_details.touching_area, path_width) 
+								area_util.overlap_distance(touching_area, possible_paths_tree[string_key].touch_details.touching_area, path_width) 
 						end
 						length = possible_paths_tree[string_key].length + length_increment
 						local new_node = {area_type="boundary", length=length, number=i, 

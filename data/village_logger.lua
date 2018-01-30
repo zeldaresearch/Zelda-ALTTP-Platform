@@ -52,8 +52,10 @@ end
 
 function vl.unpickle_log()
 	local f = sol.file.open("tempvillagelog"..game:get_player_name(),"r")
-	vl.log = unpickle(f:read("*all"))
-	f:close()
+	if (f ~= nil) then
+		vl.log = unpickle(f:read("*all"))
+		f:close()
+	end
 end
 
 function vl.start_new_log()

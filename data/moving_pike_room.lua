@@ -208,7 +208,7 @@ function pr.create_pike_room( areanumber, area_details, area, exit_areas, speed,
 			local area_to_use = maze_gen.nodes_to_area(exit[1], exit[#exit])
 			local exit_sensor = placement.place_sensor( area_to_use, "pikeroom_"..areanumber.."_exit_"..i, 0 )
 			if i > 1 then 
-				local dist = area_util.distance(exit_areas[1], exit_areas[i])
+				local dist = area_util.sqr_distance(exit_areas[1], exit_areas[i])
 				if dist > distance then 
 					furthest_sensor = exit_sensor
 					distance = dist

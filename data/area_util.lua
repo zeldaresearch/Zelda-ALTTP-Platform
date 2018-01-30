@@ -288,7 +288,7 @@ function area_util.get_largest_area( areas )
 end
 
 -- Get sqrt squared distance between two areas
-function area_util.distance(area1, area2)
+function area_util.sqr_distance(area1, area2)
 	local center1 = {x=(area1.x1+area1.x2)/2, y=(area1.y1+area1.y2)/2}
 	local center2 = {x=(area2.x1+area2.x2)/2, y=(area2.y1+area2.y2)/2}
 	local zeroed = {x=center1.x-center2.x, y=center1.y-center2.y}
@@ -296,7 +296,7 @@ function area_util.distance(area1, area2)
 end
 
 -- Util function to get the distance between two areas with an optional overlap that should be required
-function area_util.distance(area1, area2, overlap_required)
+function area_util.overlap_distance(area1, area2, overlap_required)
 	local x_distance = 0
 	if area2.x2 < area1.x1 then x_distance = area1.x1 - area2.x2 + overlap_required -- area2 is left of area1
 	elseif area2.x1 > area1.x2 then x_distance = area2.x1 - area1.x2 + overlap_required -- area 2 is right of area1

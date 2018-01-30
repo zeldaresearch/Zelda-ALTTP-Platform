@@ -1241,7 +1241,7 @@ function maze_gen.generate_maze_puzzle( area, areanumber, area_details, exit_are
 					hero:save_solid_ground(x, y, 0)
 				end
 			if i > 1 then 
-				local dist = area_util.distance(exit_areas[1], exit_areas[i])
+				local dist = area_util.sqr_distance(exit_areas[1], exit_areas[i])
 				if dist > distance then 
 					furthest_sensor_area = area_to_use
 					distance = dist

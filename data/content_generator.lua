@@ -57,16 +57,6 @@ function content.start_test(given_map, params, end_destination)
 	game = map:get_game()
 	hero = map:get_hero()
 	hero:freeze()
-		
-    -- draw_these_effects is a list of functions that should be drawn each frame on certain conditions
-	map.draw_these_effects = map.draw_these_effects or {}
-
-	map.on_draw = 
-		function (map, dst_surface)
-			for _,func in pairs(map.draw_these_effects) do
-				func(map, dst_surface)
-			end
-		end
 
 	-- Copy parameters and fill in standard parameters if not found
 	local tileset_id = tonumber(map:get_tileset())

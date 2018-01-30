@@ -168,6 +168,20 @@ local hero_movement = nil
 local ctrl_pressed = false
 function sol.main:on_update()
 
+  if sol.main.game ~= nil and sol.main.game:get_map() ~= nil then
+    local map = sol.main.game:get_map()
+	if map.draw_these_effects == nil then
+		map.draw_these_effects = {}
+
+		map.on_draw = 
+			function (map, dst_surface)
+				for _,func in pairs(map.draw_these_effects) do
+					func(map, dst_surface)
+				end
+			end
+	end
+  end
+
   if sol.main.is_debug_enabled() then
     local game = sol.main.game
     if game ~= nil then
